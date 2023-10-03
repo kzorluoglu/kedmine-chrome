@@ -1,0 +1,21 @@
+{
+  "name": "kedmine-chrome",
+  "version": "1.0.0",
+  "description": "Browser extension for Redmine Issues/Tickets with some cool features like K Style",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "production": "cross-env NODE_ENV=production node_modules/webpack/bin/webpack.js --progress --env=production --config=node_modules/laravel-mix/setup/webpack.config.js",
+    "prod": "npm run production"
+  },
+  "author": "Koray Zorluoglu",
+  "license": "ISC",
+  "dependencies": {
+    "postcss": "^8.4.31",
+    "sass": "^1.68.0",
+    "sass-loader": "^13.3.2",
+    "vue": "^3.3.4",
+    "vue-loader": "^17.2.2",
+    "vue-template-compiler": "^2.7.14"
+  }
+}
