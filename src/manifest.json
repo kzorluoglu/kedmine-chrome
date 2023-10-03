@@ -23,6 +23,6 @@
     "extension_pages": "script-src 'self'; object-src 'self';"
   },
   "host_permissions": [
-    "https://redmine.esono.de/*"
+    "https://YOUR-REDMINE-DOMAIN/*"
   ]
 }
