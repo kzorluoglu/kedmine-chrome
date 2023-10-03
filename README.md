@@ -1,6 +1,6 @@
-# Redmine Time Tracker
+# Redmine Time Tracker - Chrome Extension
 
-A Vue.js application to efficiently track time for Redmine tickets.
+A Chrome Extension with Vue.js to efficiently track time for Redmine tickets.
 
 ## Screenshots
 
