@@ -1,9 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Setup from "./components/Setup.vue";
 import Issues from "./components/Issues.vue";
+
 const routes = [
   {
     path: '/',
+    redirect: '/issues', // Redirect root path to /issues
+    meta: { requiresSetup: true }
+  },
+  {
+    path: '/issues', // Change path to '/issues'
     name: 'Issues',
     component: Issues,
     meta: { requiresSetup: true }
@@ -17,6 +23,7 @@ const routes = [
 
 const router = createRouter({
   history: createWebHistory(),
+  linkActiveClass: 'active',
   routes,
 });
 

@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import App from "./js/App.vue";
 import router from './router' // Assuming your router configuration is in 'router/index.js'
+import 'bootstrap/dist/css/bootstrap.css';
 
 const app = createApp(App)
 

@@ -10,7 +10,6 @@ export default {
     return {
       issueComment: '',
       isRunning: false,
-      startTime: null,
       elapsedTime: 0,
       lastUpdate: null,
       showDescription: false,
@@ -55,10 +54,10 @@ export default {
     },
     saveStateToLocalStorage() {
       const timerState = {
-        startTime: this.startTime,
         elapsedTime: this.elapsedTime,
         lastUpdate: this.lastUpdate,
         isRunning: this.isRunning,
+        issueComment: this.issueComment,
       };
       localStorage.setItem('timerState_' + this.issue.id, JSON.stringify(timerState));
     },
@@ -66,10 +65,11 @@ export default {
       const savedState = localStorage.getItem('timerState_' + this.issue.id);
       if (savedState) {
         const timerState = JSON.parse(savedState);
-        this.startTime = timerState.startTime;
         this.elapsedTime = timerState.elapsedTime;
         this.lastUpdate = timerState.lastUpdate;
         this.isRunning = timerState.isRunning;
+        this.issueComment = timerState.issueComment;
+        console.log(this.issueComment)
         if (this.isRunning) {
           this.interval = setInterval(this.updateTimer, 1000);
         }
@@ -84,6 +84,37 @@ export default {
     },
     pad(value) {
       return value.toString().padStart(2, '0');
+    },
+    stopTimerAndClear() {
+      // Stop the timer
+      if (this.isRunning) {
+        clearInterval(this.interval);
+        this.isRunning = false;
+      }
+
+      // Clear the elapsed time
+      this.elapsedTime = 0;
+
+      // Clear the last update time
+      this.lastUpdate = null;
+
+      // Clear the issue comment
+      this.issueComment = '';
+
+      // Save the updated state to localStorage
+      this.saveStateToLocalStorage();
+    },
+    updateIssueComment() {
+      this.saveStateToLocalStorage();
+    },
+  },
+  watch: {
+    // Watch for changes to the issueComment property and save to localStorage
+    issueComment: {
+      handler(newComment) {
+        this.saveStateToLocalStorage();
+      },
+      deep: true,
     },
   },
   created() {
@@ -105,99 +136,51 @@ export default {
 </script>
 
 <template>
-  <div class="card" @click="showDescription = !showDescription">
+  <div class="card">
     <div class="card-body">
-      <div class="grid-container">
-        <div class="subject-cell">
-          <span class="label">Issue #{{ issue.id }} - {{ issue.subject }}</span>
+      <div class="row">
+
+        <!-- First Column: Ticket ID & Subject -->
+        <div class="col-8">
+          <small :title="issue.subject" class="d-inline-block text-truncate" style="max-width: 100%;">
+            Ticket #{{ issue.id }} - {{ issue.subject }}
+        </small>
         </div>
-        <div class="button-cell">
-          <button class="toggle-button" @click.stop="toggleTimer">{{ isRunning ? 'Pause' : 'Play' }}</button>
+
+        <!-- Second Column: Play, Pause, Stop Buttons -->
+        <div class="col-4">
+          <div class="btn-group btn-group-sm" role="group"  aria-label="Timer Controls">
+            <button class="btn btn-outline-primary" @click.stop="toggleTimer">
+              {{ isRunning ? '⏸︎' : '⏵︎' }}
+            </button>
+            <button class="btn btn-outline-danger" @click.stop="stopTimerAndClear">
+              ⏹
+            </button>
+          </div>
         </div>
-        <div class="comment-cell">
-          <input class="comment-input" v-model="issueComment" placeholder="Add a comment..." />
-        </div>
+
       </div>
-      <div v-if="showDescription" class="description">
-        {{ issue.description }}
+
+      <div class="row">
+        <div class="col-8">
+          <!-- Comment Input -->
+          <div class="form-group">
+            <input class="form-control" v-model="issueComment"
+                   @change="updateIssueComment($event)"
+                   @blur="updateIssueComment($event)"
+                   placeholder="Add a comment..." />
+          </div>
+        </div>
+        <div class="col-4">
+          <!-- Timer -->
+          <div class="text-right">
+            <h1 class="display-6">{{ formatTime(usedTime) }}</h1>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.card {
-  border: 1px solid rgba(0,0,0,.125);
-  border-radius: .25rem;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.1);
-  overflow: hidden;
-  margin-bottom: 1rem;
-  padding: 10px;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.grid-container {
-  display: grid;
-  grid-template-columns: 75% 25%;
-  grid-template-rows: auto auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.subject-cell {
-  grid-column: 1 / 2;
-  grid-row: 1 / 2;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.button-cell {
-  grid-row: 1 / 3; /* Span across two rows to center it vertically between the subject and comment */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.comment-cell {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-}
-
-.comment-input {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid rgba(0,0,0,.125);
-  border-radius: .25rem;
-  transition: box-shadow .15s ease-in-out;
-}
-
-.comment-input:focus {
-  box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
-  outline: 0;
-}
-
-.label {
-  font-weight: bold;
-}
-
-.toggle-button {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: .25rem;
-  transition: background-color .15s ease-in-out;
-}
-
-.toggle-button:hover {
-  background-color: #0056b3;
-}
-
 </style>

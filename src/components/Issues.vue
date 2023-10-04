@@ -1,28 +1,31 @@
 <script>
 import Timer from "../components/Timer.vue";
 import axios from 'axios';
+import TimeEntry from "./TimeEntry.vue";
 
 export default {
   components: {
+    TimeEntry,
     Timer,
   },
   data(){
     return {
       issues: [],
+      timeEntries: [],
+      currentUser: null,
+      isLoading: true,
       searchTerm: '', // for the realtime search
     }
   },
-  computed: {
-    filteredIssues() {
-      return this.issues.filter(issue => {
-        return issue.subject.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-          issue.id.toString().includes(this.searchTerm) ||
-          issue.description.toLowerCase().includes(this.searchTerm);
-      });
-    }
-  },
   mounted() {
-    this.fetchIssues();
+    this.fetchCurrentUser();
+  },
+  watch: {
+    async searchTerm(newTerm, oldTerm) {
+      if (newTerm !== oldTerm) {
+        await this.fetchIssuesBySearchTerm();
+      }
+    }
   },
   methods: {
     getSettings() {
@@ -33,16 +36,8 @@ export default {
         apiToken: localStorage.getItem('apiToken') || '',
       }
     },
-    async fetchIssues() {
+    getAxiosHeaders() {
       const settings = this.getSettings();
-
-      // Check for necessary information
-      if (!settings.redmineURL || !settings.apiToken) {
-        console.log('Redmine URL or API Token is missing. Please configure in the setup page.');
-        return;
-      }
-
-      // Construct headers
       let headers = {
         'X-Redmine-API-Key': settings.apiToken,
       };
@@ -50,39 +45,134 @@ export default {
       if (settings.htaccessUsername && settings.htaccessPassword) {
         headers['Authorization'] = 'Basic ' + btoa(settings.htaccessUsername + ':' + settings.htaccessPassword);
       }
+      return headers;
+    },
+
+    async fetchCurrentUser() {
+      const settings = this.getSettings();
+
+      if (!settings.redmineURL || !settings.apiToken) {
+        console.log('Redmine URL or API Token is missing. Please configure in the setup page.');
+        return;
+      }
+
+      let headers = this.getAxiosHeaders();
 
       try {
-        let response = await axios.get(`${settings.redmineURL}/issues.json`, {
+        let response = await axios.get(`${settings.redmineURL}/users/current.json`, {
+          headers: headers,
+        });
+
+        this.currentUser = response.data.user;
+        await this.fetchTimeEntries();
+      } catch (error) {
+        console.error('There was an error fetching the current user:', JSON.stringify(error, null, 2));
+      }
+    },
+
+    async fetchTimeEntries() {
+      if (!this.currentUser) return;
+
+      const settings = this.getSettings();
+      const userId = this.currentUser.id;
+      let headers = this.getAxiosHeaders();
+
+      try {
+        let response = await axios.get(`${settings.redmineURL}/time_entries.json`, {
           params: {
-            // Include any necessary parameters for the API request
+            user_id: userId,
           },
           headers: headers,
         });
 
-        this.issues = response.data.issues; // take last 50 issues
-        localStorage.setItem('issues', JSON.stringify(this.issues));
+        this.timeEntries = response.data.time_entries;
+
+        for (let entry of this.timeEntries) {
+          if (entry.issue && entry.issue.id) {
+            entry.detailedIssue = await this.fetchIssueDetails(entry.issue.id);
+          }
+        }
+
+        this.isLoading = false;
       } catch (error) {
-        console.error('There was an error fetching the issues:', JSON.stringify(error, null, 2));
-        // Try to load from localStorage if the request fails
-        this.issues = JSON.parse(localStorage.getItem('issues')) || [];
+        console.error('There was an error fetching the time entries:', JSON.stringify(error, null, 2));
+        this.isLoading = false;
       }
-    }
+    },
+
+    async fetchIssueDetails(issueId) {
+      const settings = this.getSettings();
+      let headers = this.getAxiosHeaders();
+
+      try {
+        let response = await axios.get(`${settings.redmineURL}/issues/${issueId}.json`, {
+          headers: headers,
+        });
+
+        return response.data.issue;
+      } catch (error) {
+        console.error(`There was an error fetching the details for issue ${issueId}:`, JSON.stringify(error, null, 2));
+        return null;
+      }
+    },
+
+    async fetchIssuesBySearchTerm() {
+      if (!this.searchTerm) return; // If the searchTerm is empty, don't do anything
+
+      const settings = this.getSettings();
+      let headers = this.getAxiosHeaders();
+
+      try {
+        let response = await axios.get(`${settings.redmineURL}/issues.json`, {
+          params: {
+            subject: this.searchTerm,  // Search by issue's subject
+          },
+          headers: headers,
+        });
+
+        this.issues = response.data.issues; // This will store the fetched issues
+      } catch (error) {
+        console.error('There was an error searching for the issues:', JSON.stringify(error, null, 2));
+      }
+    },
+
+
   },
 };
 </script>
 
 <template>
   <div class="grid-container">
+
+    <!-- Search Section -->
     <div class="search-bar">
+      <h3>Search via Redmine API</h3>
       <input type="text" v-model="searchTerm" placeholder="Search by issue name, description or id..." class="search-input">
     </div>
-    <div class="issues-list">
-      <div v-for="issue in filteredIssues" :key="issue.id" class="issue-row">
-        <Timer :issue="issue"/>
-      </div>
+
+    <div class="search-results">
+      <h3>Search Results</h3>
+      <div v-if="issues.length === 0">No issues found.</div>
+      <ol class="list-group">
+        <li v-for="issue in issues" :key="issue.id">
+          <!-- Display issue details here. For example: -->
+          {{ issue.subject }}
+        </li>
+      </ol>
     </div>
+
+    <!-- Display Time Entries -->
+    <div class="time-entries-list">
+      <h3>Old Worked Issues</h3>
+      <div v-if="isLoading">Loading...</div>
+        <ol class="list-group" v-else v-for="entry in timeEntries" :key="entry.id">
+         <TimeEntry :entry="entry"/>
+        </ol>
+    </div>
+
   </div>
 </template>
+
 
 <style lang="less">
 .grid-container {
@@ -126,4 +216,26 @@ export default {
     background: rgba(0,123,255,.15);
   }
 }
+
+.search-results {
+  grid-column: 1 / -1; // takes up the full width
+
+  ol.list-group {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+
+    li {
+      padding: .5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-top: .5rem;
+
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+  }
+}
+
 </style>
