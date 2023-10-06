@@ -1,33 +1,39 @@
 <script>
 import Timer from "../components/Timer.vue";
 import axios from 'axios';
-import TimeEntry from "./TimeEntry.vue";
 
 export default {
   components: {
-    TimeEntry,
     Timer,
   },
   data(){
     return {
-      issues: [],
+      foundedIssues: [],
       timeEntries: [],
       currentUser: null,
       isLoading: true,
-      searchTerm: '', // for the realtime search
+      searchTerm: '', // for the realtime search,
+      runningTimers: [],
     }
   },
   mounted() {
     this.fetchCurrentUser();
   },
   watch: {
-    async searchTerm(newTerm, oldTerm) {
-      if (newTerm !== oldTerm) {
-        await this.fetchIssuesBySearchTerm();
-      }
+    async searchTerm(newTerm) {
+      await this.fetchIssuesBySearchTerm();
     }
   },
   methods: {
+    startTimerFromIssue(issue) {
+      this.runningTimers.push({
+        issue: issue,
+        startedAt: new Date()
+      });
+    },
+    startTimerFromTimeEntry(entry) {
+      this.startTimerFromIssue(entry.detailedIssue);
+    },
     getSettings() {
       return {
         redmineURL: localStorage.getItem('redmineURL') || '',
@@ -70,7 +76,35 @@ export default {
       }
     },
 
-    async fetchTimeEntries() {
+    syncTimeEntries() {
+      this.fetchTimeEntries(true);
+    },
+
+    convertTimeEntryToTimerFormat(entry) {
+      const settings = this.getSettings();
+
+      // Assume entry.detailedIssue is populated with the result of fetchIssueDetails
+      if (entry.detailedIssue) {
+        return {
+          id: entry.detailedIssue.id,
+          title: `${entry.detailedIssue.id} - ${entry.detailedIssue.subject}`,
+          url: `${settings.redmineURL}/issues/${entry.detailedIssue.id}`,
+          description: entry.detailedIssue.description,
+        };
+      }
+      return null;
+    },
+
+    async fetchTimeEntries(getLastEntries = false) {
+
+      const savedTimeEntries = localStorage.getItem('savedTimeEntries');
+      if (savedTimeEntries && getLastEntries === false) {
+        this.isLoading = false;
+        this.timeEntries = JSON.parse(savedTimeEntries);
+
+        return;
+      }
+
       if (!this.currentUser) return;
 
       const settings = this.getSettings();
@@ -87,11 +121,15 @@ export default {
 
         this.timeEntries = response.data.time_entries;
 
+
         for (let entry of this.timeEntries) {
           if (entry.issue && entry.issue.id) {
             entry.detailedIssue = await this.fetchIssueDetails(entry.issue.id);
           }
         }
+
+        // Save to localStorage
+        localStorage.setItem('savedTimeEntries', JSON.stringify(this.timeEntries));
 
         this.isLoading = false;
       } catch (error) {
@@ -122,21 +160,46 @@ export default {
       const settings = this.getSettings();
       let headers = this.getAxiosHeaders();
 
-      try {
-        let response = await axios.get(`${settings.redmineURL}/issues.json`, {
-          params: {
-            subject: this.searchTerm,  // Search by issue's subject
-          },
-          headers: headers,
-        });
+      if (Number(this.searchTerm)) {
+        try {
+          let response = await axios.get(`${settings.redmineURL}/issues/${this.searchTerm}.json`, {
+            headers: headers,
+          });
 
-        this.issues = response.data.issues; // This will store the fetched issues
-      } catch (error) {
-        console.error('There was an error searching for the issues:', JSON.stringify(error, null, 2));
+          // Normalize the issue for Timer component
+          const normalizedIssue = {
+            id: response.data.issue.id,
+            title: `${response.data.issue.id} - ${response.data.issue.subject}`,
+            url: `${settings.redmineURL}/issues/${response.data.issue.id}`,
+            description: response.data.issue.description
+          };
+
+          this.foundedIssues = [normalizedIssue];
+
+        } catch (error) {
+          console.error(`There was an error fetching the issue with ID ${this.searchTerm}:`, JSON.stringify(error, null, 2));
+        }
+      } else {
+
+        try {
+          let response = await axios.get(`${settings.redmineURL}/search.json`, {
+            params: {
+              q: this.searchTerm,         // The search query
+              object_types: ['issue'],    // To search only issues
+            },
+            headers: headers,
+          });
+
+          this.foundedIssues = response.data.results; // This will store the fetched issues
+
+        } catch (error) {
+          console.error('There was an error searching for the issues:', JSON.stringify(error, null, 2));
+        }
       }
     },
 
-
+  },
+  beforeDestroy() {
   },
 };
 </script>
@@ -144,29 +207,37 @@ export default {
 <template>
   <div class="grid-container">
 
+    <!-- Running Timers Section -->
+    <div class="running-timers-list">
+      <h3>Not Booked Running Timers</h3>
+      <div v-for="(timer, index) in runningTimers" :key="index">
+        <Timer :issue="timer.issue" :startedAt="timer.startedAt" />
+       </div>
+    </div>
+
     <!-- Search Section -->
     <div class="search-bar">
       <h3>Search via Redmine API</h3>
       <input type="text" v-model="searchTerm" placeholder="Search by issue name, description or id..." class="search-input">
     </div>
 
-    <div class="search-results">
+    <div class="search-results" v-if="searchTerm.length > 0">
       <h3>Search Results</h3>
-      <div v-if="issues.length === 0">No issues found.</div>
-      <ol class="list-group">
-        <li v-for="issue in issues" :key="issue.id">
-          <!-- Display issue details here. For example: -->
-          {{ issue.subject }}
-        </li>
-      </ol>
+      <div v-if="foundedIssues.length === 0">No issues found.</div>
+        <div v-for="issue in foundedIssues" :key="issue.id">
+          <Timer :issue="issue" />
+          <button @click="startTimerFromIssue(issue)">Create Timer</button>
+        </div>
     </div>
 
     <!-- Display Time Entries -->
     <div class="time-entries-list">
-      <h3>Old Worked Issues</h3>
+      <button @click="syncTimeEntries">Sync</button>
+      <h3>My last issues</h3>
       <div v-if="isLoading">Loading...</div>
         <ol class="list-group" v-else v-for="entry in timeEntries" :key="entry.id">
-         <TimeEntry :entry="entry"/>
+          <Timer :issue="convertTimeEntryToTimerFormat(entry)" />
+          <button @click="startTimerFromTimeEntry(entry)">Create Timer</button>
         </ol>
     </div>
 

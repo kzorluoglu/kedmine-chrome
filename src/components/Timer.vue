@@ -142,9 +142,9 @@ export default {
 
         <!-- First Column: Ticket ID & Subject -->
         <div class="col-8">
-          <small :title="issue.subject" class="d-inline-block text-truncate" style="max-width: 100%;">
-            Ticket #{{ issue.id }} - {{ issue.subject }}
-        </small>
+          <a :href="issue.url"><small :title="issue.description" class="d-inline-block text-truncate" style="max-width: 100%;">
+            Ticket #{{ issue.id }} - {{ issue.title }}
+        </small></a>
         </div>
 
         <!-- Second Column: Play, Pause, Stop Buttons -->
