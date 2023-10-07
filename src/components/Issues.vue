@@ -1,12 +1,16 @@
 <script>
 import Timer from "../components/Timer.vue";
+import TimeEntry from "../components/TimeEntry.vue";
+import SearchEntry from "../components/SearchEntry.vue";
 import axios from 'axios';
 
 export default {
   components: {
     Timer,
+    TimeEntry,
+    SearchEntry,
   },
-  data(){
+  data() {
     return {
       foundedIssues: [],
       timeEntries: [],
@@ -18,21 +22,40 @@ export default {
   },
   mounted() {
     this.fetchCurrentUser();
+
+    this.loadRunningTimersFromLocalStorage();
   },
   watch: {
-    async searchTerm(newTerm) {
+    async searchTerm() {
       await this.fetchIssuesBySearchTerm();
     }
   },
   methods: {
-    startTimerFromIssue(issue) {
-      this.runningTimers.push({
-        issue: issue,
-        startedAt: new Date()
+    async loadRunningTimersFromLocalStorage() {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('timerState_')) {
+          const timerState = JSON.parse(localStorage.getItem(key));
+          // Do something with timerState, for example:
+          this.runningTimers.push(timerState);
+        }
       });
     },
-    startTimerFromTimeEntry(entry) {
-      this.startTimerFromIssue(entry.detailedIssue);
+    startTimerFromIssue(issue) {
+      this.runningTimers.push(issue);
+
+      const timerState = {
+        id: issue.id,
+        title: issue.title,
+        description: issue.description,
+        url: issue.url,
+        issueComment: '',
+        isRunning: false,
+        elapsedTime: 0,
+        lastUpdate: null,
+      };
+
+      localStorage.setItem('timerState_' + issue.id, JSON.stringify(timerState));
     },
     getSettings() {
       return {
@@ -79,21 +102,28 @@ export default {
     syncTimeEntries() {
       this.fetchTimeEntries(true);
     },
-
-    convertTimeEntryToTimerFormat(entry) {
-      const settings = this.getSettings();
-
-      // Assume entry.detailedIssue is populated with the result of fetchIssueDetails
-      if (entry.detailedIssue) {
-        return {
-          id: entry.detailedIssue.id,
-          title: `${entry.detailedIssue.id} - ${entry.detailedIssue.subject}`,
-          url: `${settings.redmineURL}/issues/${entry.detailedIssue.id}`,
-          description: entry.detailedIssue.description,
-        };
-      }
-      return null;
+    convertDecimalHoursToMilliseconds(decimalHours) {
+      return decimalHours * 3_600_000;  // Convert hours to milliseconds
     },
+      convertTimeEntryToTimerFormat(entry) {
+        const settings = this.getSettings();
+
+        // Assume entry.detailedIssue is populated with the result of fetchIssueDetails
+        if (entry.detailedIssue) {
+
+          // Convert entry.hours into milliseconds
+          const elapsedTime = this.convertDecimalHoursToMilliseconds(entry.hours);
+
+          return {
+            id: entry.detailedIssue.id,
+            title: entry.detailedIssue.subject,
+            url: `${settings.redmineURL}/issues/${entry.detailedIssue.id}`,
+            description: entry.detailedIssue.description,
+            elapsedTime
+          };
+        }
+        return null;
+      },
 
     async fetchTimeEntries(getLastEntries = false) {
 
@@ -197,7 +227,9 @@ export default {
         }
       }
     },
-
+    handleStartTimer(issue) {
+      this.startTimerFromIssue(issue);
+    },
   },
   beforeDestroy() {
   },
@@ -210,8 +242,12 @@ export default {
     <!-- Running Timers Section -->
     <div class="running-timers-list">
       <h3>Not Booked Running Timers</h3>
-      <div v-for="(timer, index) in runningTimers" :key="index">
-        <Timer :issue="timer.issue" :startedAt="timer.startedAt" />
+      <div v-for="(issue, index) in runningTimers" :key="index">
+        <Timer :id="issue.id"
+               :title="issue.title"
+               :description="issue.description"
+               :url="issue.url"
+        />
        </div>
     </div>
 
@@ -224,21 +260,23 @@ export default {
     <div class="search-results" v-if="searchTerm.length > 0">
       <h3>Search Results</h3>
       <div v-if="foundedIssues.length === 0">No issues found.</div>
-        <div v-for="issue in foundedIssues" :key="issue.id">
-          <Timer :issue="issue" />
-          <button @click="startTimerFromIssue(issue)">Create Timer</button>
+          <SearchEntry :issue="issue"
+                       v-for="issue in foundedIssues"
+                       :key="issue.id"
+                       @start-timer-for-issue="handleStartTimer"
+          />
         </div>
-    </div>
 
     <!-- Display Time Entries -->
     <div class="time-entries-list">
       <button @click="syncTimeEntries">Sync</button>
       <h3>My last issues</h3>
       <div v-if="isLoading">Loading...</div>
-        <ol class="list-group" v-else v-for="entry in timeEntries" :key="entry.id">
-          <Timer :issue="convertTimeEntryToTimerFormat(entry)" />
-          <button @click="startTimerFromTimeEntry(entry)">Create Timer</button>
-        </ol>
+          <TimeEntry :issue="convertTimeEntryToTimerFormat(entry)"
+                     v-for="entry in timeEntries"
+                     :key="entry.id"
+                     @start-timer-for-issue="handleStartTimer"
+          />
     </div>
 
   </div>

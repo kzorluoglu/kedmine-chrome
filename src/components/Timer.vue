@@ -4,10 +4,17 @@ import { EventBus } from "../eventBus";
 export default {
   name: 'Timer',
   props: {
-    issue: 'Object'
+    id: null,
+    title: null,
+    description: null,
+    url: null,
   },
   data() {
     return {
+      localId: this.id,
+      localTitle: this.title,
+      localDescription: this.description,
+      localUrl: this.url,
       issueComment: '',
       isRunning: false,
       elapsedTime: 0,
@@ -31,7 +38,7 @@ export default {
         clearInterval(this.interval);
       } else {
         // Emit the 'timer-started' event before starting the timer
-        EventBus.emit('timer-started', this.issue.id);
+        EventBus.emit('timer-started', this.id);
 
         this.lastUpdate = new Date().getTime();
         this.interval = setInterval(this.updateTimer, 1000);
@@ -54,22 +61,32 @@ export default {
     },
     saveStateToLocalStorage() {
       const timerState = {
+        id: this.localId,
+        title: this.localTitle,
+        description: this.localDescription,
+        url: this.localUrl,
         elapsedTime: this.elapsedTime,
         lastUpdate: this.lastUpdate,
         isRunning: this.isRunning,
         issueComment: this.issueComment,
       };
-      localStorage.setItem('timerState_' + this.issue.id, JSON.stringify(timerState));
+      localStorage.setItem('timerState_' + this.id, JSON.stringify(timerState));
     },
     loadStateFromLocalStorage() {
-      const savedState = localStorage.getItem('timerState_' + this.issue.id);
+      const savedState = localStorage.getItem('timerState_' + this.id);
       if (savedState) {
         const timerState = JSON.parse(savedState);
+
+        this.localId = timerState.id;
+        this.localTitle = timerState.title;
+        this.localDescription = timerState.description;
+        this.localUrl = timerState.url;
+
         this.elapsedTime = timerState.elapsedTime;
         this.lastUpdate = timerState.lastUpdate;
         this.isRunning = timerState.isRunning;
         this.issueComment = timerState.issueComment;
-        console.log(this.issueComment)
+
         if (this.isRunning) {
           this.interval = setInterval(this.updateTimer, 1000);
         }
@@ -119,8 +136,9 @@ export default {
   },
   created() {
     this.loadStateFromLocalStorage();
+
     EventBus.on('timer-started', (issueNumber) => {
-      if (issueNumber !== this.issue.id) {
+      if (issueNumber !== this.id) {
         this.pauseTimer();
       }
     });
@@ -136,14 +154,12 @@ export default {
 </script>
 
 <template>
-  <div class="card">
-    <div class="card-body">
       <div class="row">
 
         <!-- First Column: Ticket ID & Subject -->
         <div class="col-8">
-          <a :href="issue.url"><small :title="issue.description" class="d-inline-block text-truncate" style="max-width: 100%;">
-            Ticket #{{ issue.id }} - {{ issue.title }}
+          <a :href="localUrl"><small :title="localDescription" class="d-inline-block text-truncate" style="max-width: 100%;">
+            Ticket #{{ localId }} - {{ localTitle }}
         </small></a>
         </div>
 
@@ -178,8 +194,6 @@ export default {
           </div>
         </div>
       </div>
-    </div>
-  </div>
 </template>
 
 <style scoped>

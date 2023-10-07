@@ -17,7 +17,9 @@
 </template>
 <style>
 body {
-  width: 600px;
+  width: 600px !important;
+  max-width: 600px !important;
+  min-width: 600px !important;
 }
 </style>
 <script setup>
