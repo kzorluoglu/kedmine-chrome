@@ -22,5 +22,22 @@ body {
   min-width: 600px !important;
 }
 </style>
-<script setup>
+<script>
+import { EventBus } from "../eventBus";
+
+export default {
+  created() {
+    EventBus.on('create-new-timer', this.handleCreateNewTimer);
+  },
+  beforeDestroy() {
+    EventBus.off('create-new-timer', this.handleCreateNewTimer);
+  },
+  methods: {
+    handleCreateNewTimer() {
+      // Your logic to create a new timer goes here
+      console.log("Creating a new timer!");
+    }
+  }
+}
 </script>
+
