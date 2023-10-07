@@ -24,5 +24,13 @@
   },
   "host_permissions": [
     "https://YOUR-REDMINE-DOMAIN/*"
-  ]
+  ],
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Shift+KED"
+      },
+      "description": "Create a new timer"
+    }
+  }
 }
