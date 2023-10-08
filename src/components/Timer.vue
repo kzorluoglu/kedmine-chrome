@@ -69,6 +69,7 @@ export default {
         lastUpdate: this.lastUpdate,
         isRunning: this.isRunning,
         issueComment: this.issueComment,
+        usedTime: this.usedTime,
       };
       localStorage.setItem('timerState_' + this.id, JSON.stringify(timerState));
     },
@@ -124,6 +125,19 @@ export default {
     updateIssueComment() {
       this.saveStateToLocalStorage();
     },
+    bookTimeEntry() {
+      this.$emit('book-time-entry', {
+        id: this.localId,
+        title: this.localTitle,
+        description: this.localDescription,
+        url: this.localUrl,
+        elapsedTime: this.elapsedTime,
+        lastUpdate: this.lastUpdate,
+        isRunning: this.isRunning,
+        issueComment: this.issueComment,
+        usedTime: this.usedTime,
+      });
+    }
   },
   watch: {
     // Watch for changes to the issueComment property and save to localStorage
@@ -171,6 +185,9 @@ export default {
             </button>
             <button class="btn btn-outline-danger" @click.stop="stopTimerAndClear">
               ⏹
+            </button>
+            <button class="btn btn-outline-success" @click.stop="bookTimeEntry">
+              Book Time
             </button>
           </div>
         </div>

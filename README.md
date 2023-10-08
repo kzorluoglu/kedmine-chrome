@@ -10,6 +10,48 @@ _Issues Page_
 ![Setup Page](/screenshots/setup-page.png)
 _Setup Page_
 
+![Search Result](/screenshots/search-results.png)
+_Search Result_
+
+## Steps to Use the Extension
+
+1. **Build the project**
+
+   Navigate to your project's root directory in the terminal and run the following command:
+
+   ```bash
+   npm run build
+   ```
+   This will generate the dist folder, which contains the built files required for the extension.
+
+2. **Activate Developer Mode in Chrome**
+   * Open the Chrome browser.
+   * Go to `chrome://extensions/` or navigate to Menu > More Tools > Extensions.
+   * Ensure the Developer mode toggle in the top right corner is turned on.
+
+3. Load the Extension
+   * Click the Load unpacked button on the Extensions page.
+   * Navigate to your project's directory and select the dist folder.
+   * Click the Select Folder button (or equivalent, depending on your OS).
+
+4. Extension is now active!
+   * You should now see your extension listed on the Extensions page in Chrome. If the extension has a popup or icon, you should also see it next to the address bar.
+   * Use the extension as needed.
+
+
+## ToDo
+
+* Create Timer in Background via Shortcut
+   * The shortcut (`Ctrl + Shift + k`) is already completed. 
+   * Temp Timer Component
+        * This component must be accepts an Issue ID and an optional title. This is reasonable if you want to track time against specific issues.
+   *  Issue Text or Issue ID Information - Need Idea
+        * Solution ideas
+            * URL Bar as Issue Comment Text: This would be convenient, but you need to ensure the URL contains relevant information about the issue???
+            * Right-Click Menu for Issue Comment Input???
+   * Create timerState in LocalStorage - You have referenced a code line (src/components/Timer.vue:76)
+
+
 ## Features
 
 - Real-time search for tickets.

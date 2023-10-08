@@ -230,6 +230,43 @@ export default {
     handleStartTimer(issue) {
       this.startTimerFromIssue(issue);
     },
+    elapsedTimeToHours(milliseconds) {
+      return milliseconds / 3_600_000;  // Convert milliseconds to hours
+    },
+    async handleBookTimeEntry(timerState) {
+
+      const settings = this.getSettings();
+      const headers = this.getAxiosHeaders();
+
+      // Create the payload for the time entry
+      const timeEntryData = {
+        time_entry: {
+          issue_id: timerState.id,
+          hours: this.elapsedTimeToHours(timerState.usedTime),
+          comments: timerState.issueComment
+        }
+      };
+
+      try {
+        await axios.post(`${settings.redmineURL}/time_entries.xml`, timeEntryData, {
+          headers: headers,
+        });
+
+        this.removeTimer(timerState.id);
+
+        console.log('Time entry booked successfully');
+      } catch (error) {
+        console.error('Error booking the time entry:', error);
+      }
+    },
+
+    removeTimer(issueId) {
+      // Remove from runningTimers
+      this.runningTimers = this.runningTimers.filter(timer => timer.id !== issueId);
+
+      // Remove from localStorage
+      localStorage.removeItem('timerState_' + issueId);
+    },
   },
   beforeDestroy() {
   },
@@ -247,6 +284,7 @@ export default {
                :title="issue.title"
                :description="issue.description"
                :url="issue.url"
+               @book-time-entry="handleBookTimeEntry"
         />
        </div>
     </div>
