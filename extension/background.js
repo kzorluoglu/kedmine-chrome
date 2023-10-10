@@ -1,0 +1,1 @@
+async function getCurrentTab(){let[e]=await chrome.tabs.query({active:!0,lastFocusedWindow:!0});return e}chrome.commands.onCommand.addListener((async function(e){if("create_new_timer_command"===e){chrome.runtime.sendMessage({action:"create-new-timer"});let e=await getCurrentTab();console.log(e)}}));

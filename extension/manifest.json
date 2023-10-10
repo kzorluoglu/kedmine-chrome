@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "My Redmine Extension",
+  "version": "1.0",
+  "description": "A brief description of the extension.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "webRequest"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "images/logo-16x16.png",
+      "48": "images/logo-48x48.png"
+    }
+  },
+  "icons": {
+    "16": "images/logo-16x16.png",
+    "48": "images/logo-48x48.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
+  "host_permissions": [
+    "https://YOUR-REDMINE-DOMAIN/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "commands": {
+    "create_new_timer_command": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K"
+      },
+      "description": "Create a new timer"
+    }
+  }
+}
