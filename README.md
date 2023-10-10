@@ -2,6 +2,16 @@
 
 A Chrome Extension with Vue.js to efficiently track time for Redmine tickets.
 
+## Features
+
+- Multiple Timer for some issue
+- Real-time search for tickets.
+- Timer functionality integrated for each ticket.
+- Direct API integration with Redmine.
+- Comment functionality for each ticket.
+- Clean and responsive UI/UX.
+
+
 ## Screenshots
 
 ![Issues Page](/screenshots/issues-page.png)
@@ -14,6 +24,19 @@ _Setup Page_
 _Search Result_
 
 ## Steps to Use the Extension
+
+1. **Clone the project or Download `extension` folder**
+2. **Activate Developer Mode in Chrome**
+    * Open the Chrome browser.
+    * Go to `chrome://extensions/` or navigate to Menu > More Tools > Extensions.
+    * Ensure the Developer mode toggle in the top right corner is turned on.
+3. Load the Extension
+    * Click the Load unpacked button on the Extensions page.
+    * Navigate to your project's directory and select the `extension` folder.
+    * Click the Select Folder button (or equivalent, depending on your OS).
+
+
+## Steps to Build the Extension
 
 1. **Build the project**
 
@@ -51,14 +74,7 @@ _Search Result_
             * Right-Click Menu for Issue Comment Input???
    * Create timerState in LocalStorage - You have referenced a code line (src/components/Timer.vue:76)
 
-
-## Features
-
-- Real-time search for tickets.
-- Timer functionality integrated for each ticket.
-- Direct API integration with Redmine.
-- Comment functionality for each ticket.
-- Clean and responsive UI/UX.
+   
 
 ## Installation
 
