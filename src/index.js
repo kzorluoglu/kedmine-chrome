@@ -16,7 +16,6 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 app.use(router) // This is how you inject the router into the Vue app
-
 // Mount the app to the DOM
 app.mount('#app');
 

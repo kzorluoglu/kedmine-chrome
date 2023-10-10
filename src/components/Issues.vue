@@ -42,9 +42,12 @@ export default {
       });
     },
     startTimerFromIssue(issue) {
-      this.runningTimers.push(issue);
+      // Retrieve the uniqueTimerId from localStorage and parse it as an integer
+      // If it's not set yet, default it to 0
+      let uniqueTimerId = parseInt(localStorage.getItem('uniqueTimerId')) || 0;
 
       const timerState = {
+        uniqueTimerId: uniqueTimerId,
         id: issue.id,
         title: issue.title,
         description: issue.description,
@@ -55,8 +58,13 @@ export default {
         lastUpdate: null,
       };
 
-      localStorage.setItem('timerState_' + issue.id, JSON.stringify(timerState));
-    },
+      this.runningTimers.push(timerState);
+
+      localStorage.setItem('timerState_' + uniqueTimerId, JSON.stringify(timerState));
+
+      // Increment uniqueTimerId for the next timer and store it back in localStorage
+      localStorage.setItem('uniqueTimerId', uniqueTimerId + 1);
+      },
     getSettings() {
       return {
         redmineURL: localStorage.getItem('redmineURL') || '',
@@ -227,6 +235,11 @@ export default {
         }
       }
     },
+    handleRemoveTimer(timerState)
+    {
+      console.log(timerState)
+      this.removeTimer(timerState.uniqueTimerId);
+    },
     handleStartTimer(issue) {
       this.startTimerFromIssue(issue);
     },
@@ -252,7 +265,7 @@ export default {
           headers: headers,
         });
 
-        this.removeTimer(timerState.id);
+        this.removeTimer(timerState.uniqueTimerId);
 
         console.log('Time entry booked successfully');
       } catch (error) {
@@ -260,12 +273,13 @@ export default {
       }
     },
 
-    removeTimer(issueId) {
+    removeTimer(uniqueTimerId) {
       // Remove from runningTimers
-      this.runningTimers = this.runningTimers.filter(timer => timer.id !== issueId);
+      console.log(uniqueTimerId)
+      this.runningTimers = this.runningTimers.filter(timer => timer.uniqueTimerId !== uniqueTimerId);
 
       // Remove from localStorage
-      localStorage.removeItem('timerState_' + issueId);
+      localStorage.removeItem('timerState_' + uniqueTimerId);
     },
   },
   beforeDestroy() {
@@ -274,115 +288,77 @@ export default {
 </script>
 
 <template>
-  <div class="grid-container">
 
-    <!-- Running Timers Section -->
-    <div class="running-timers-list">
-      <h3>Not Booked Running Timers</h3>
-      <div v-for="(issue, index) in runningTimers" :key="index">
-        <Timer :id="issue.id"
-               :title="issue.title"
-               :description="issue.description"
-               :url="issue.url"
-               @book-time-entry="handleBookTimeEntry"
+  <!-- Running Timers -->
+  <div class="row" v-if="runningTimers.length > 0">
+    <div class="col-12">
+      <h5>Running Timers</h5>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <Timer
+        v-for="(issue, index) in runningTimers" :key="index"
+        :uniqueTimerId="issue.uniqueTimerId"
+        :id="issue.id"
+        :title="issue.title"
+        :description="issue.description"
+        :url="issue.url"
+        @book-time-entry="handleBookTimeEntry"
+        @remove-timer="handleRemoveTimer"
+      />
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="row mt-3 mb-3">
+    <div class="col-12">
+      <h5>Search via Redmine API</h5>
+    </div>
+    <div class="col-12">
+      <input type="text" class="form-control" v-model="searchTerm"
+             placeholder="Search by issue name, description or id">
+    </div>
+  </div>
+  <div class="row mt-3 mb-3" v-if="searchTerm.length > 0">
+    <div class="col-12">
+        <h3>Search Results</h3>
+        <div v-if="foundedIssues.length === 0">No issues found.</div>
+        <SearchEntry :issue="issue"
+                     v-for="issue in foundedIssues"
+                     :key="issue.id"
+                     @start-timer-for-issue="handleStartTimer"
         />
-       </div>
     </div>
-
-    <!-- Search Section -->
-    <div class="search-bar">
-      <h3>Search via Redmine API</h3>
-      <input type="text" v-model="searchTerm" placeholder="Search by issue name, description or id..." class="search-input">
-    </div>
-
-    <div class="search-results" v-if="searchTerm.length > 0">
-      <h3>Search Results</h3>
-      <div v-if="foundedIssues.length === 0">No issues found.</div>
-          <SearchEntry :issue="issue"
-                       v-for="issue in foundedIssues"
-                       :key="issue.id"
-                       @start-timer-for-issue="handleStartTimer"
-          />
-        </div>
+  </div>
 
     <!-- Display Time Entries -->
     <div class="time-entries-list">
-      <button @click="syncTimeEntries">Sync</button>
-      <h3>My last issues</h3>
-      <div v-if="isLoading">Loading...</div>
+      <div class="row">
+        <div class="col-9">
+          <h5>My last issues</h5>
+        </div>
+        <div class="col-3">
+          <button class="btn btn-sm btn-outline-secondary" @click="syncTimeEntries">Sync</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div v-if="isLoading">Loading...</div>
           <TimeEntry :issue="convertTimeEntryToTimerFormat(entry)"
                      v-for="entry in timeEntries"
                      :key="entry.id"
                      @start-timer-for-issue="handleStartTimer"
           />
-    </div>
+        </div>
+      </div>
 
-  </div>
+
+
+    </div>
 </template>
 
 
 <style lang="less">
-.grid-container {
-  display: grid;
-  grid-template-columns: 1fr; /* takes up the full width */
-  gap: 20px;
-}
-
-.search-bar {
-  grid-column: 1 / -1; /* takes up the full width */
-}
-
-.search-input {
-  width: 100%;
-  padding: .25rem;
-  box-sizing: border-box;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  transition: box-shadow .15s ease-in-out;
-}
-
-.search-input:focus {
-  box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
-  outline: 0;
-}
-
-.issues-list {
-  display: grid;
-  grid-template-columns: 1fr; /* just one full-width column */
-  width: 100%; /* takes up the full available width */
-}
-
-.issue-row {
-  display: grid;
-  grid-template-columns: 1fr; /* just one full-width column */
-  padding: .25rem 0;
-  transition: background 0.2s ease;
-  width: 100%; /* takes up the full available width of its container */
-
-  &:hover {
-    background: rgba(0,123,255,.15);
-  }
-}
-
-.search-results {
-  grid-column: 1 / -1; // takes up the full width
-
-  ol.list-group {
-    padding: 0;
-    margin: 0;
-    list-style-type: none;
-
-    li {
-      padding: .5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-top: .5rem;
-
-      &:first-child {
-        margin-top: 0;
-      }
-    }
-  }
-}
 
 </style>

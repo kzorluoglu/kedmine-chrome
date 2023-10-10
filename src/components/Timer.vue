@@ -1,9 +1,13 @@
 <script>
 import { EventBus } from "../eventBus";
-
-export default {
+import { Close, Play, Pause, Stop, SendClock } from "mdue"
+ export default {
   name: 'Timer',
+  components: {
+    Close, Play, Pause, Stop, SendClock
+  },
   props: {
+    uniqueTimerId: null,
     id: null,
     title: null,
     description: null,
@@ -38,7 +42,7 @@ export default {
         clearInterval(this.interval);
       } else {
         // Emit the 'timer-started' event before starting the timer
-        EventBus.emit('timer-started', this.id);
+        EventBus.emit('timer-started', this.uniqueTimerId);
 
         this.lastUpdate = new Date().getTime();
         this.interval = setInterval(this.updateTimer, 1000);
@@ -61,6 +65,7 @@ export default {
     },
     saveStateToLocalStorage() {
       const timerState = {
+        uniqueTimerId: this.uniqueTimerId,
         id: this.localId,
         title: this.localTitle,
         description: this.localDescription,
@@ -126,7 +131,15 @@ export default {
       this.saveStateToLocalStorage();
     },
     bookTimeEntry() {
-      this.$emit('book-time-entry', {
+      this.$emit('book-time-entry', this.getState());
+    },
+    removeTimer() {
+      console.log(this.getState())
+      this.$emit('remove-timer', this.getState());
+    },
+    getState() {
+      return {
+        uniqueTimerId: this.uniqueTimerId,
         id: this.localId,
         title: this.localTitle,
         description: this.localDescription,
@@ -136,7 +149,7 @@ export default {
         isRunning: this.isRunning,
         issueComment: this.issueComment,
         usedTime: this.usedTime,
-      });
+      }
     }
   },
   watch: {
@@ -151,8 +164,8 @@ export default {
   created() {
     this.loadStateFromLocalStorage();
 
-    EventBus.on('timer-started', (issueNumber) => {
-      if (issueNumber !== this.id) {
+    EventBus.on('timer-started', (uniqueTimerId) => {
+      if (uniqueTimerId !== this.uniqueTimerId) {
         this.pauseTimer();
       }
     });
@@ -168,33 +181,39 @@ export default {
 </script>
 
 <template>
-      <div class="row">
+      <div class="row" >
 
         <!-- First Column: Ticket ID & Subject -->
         <div class="col-8">
-          <a :href="localUrl"><small :title="localDescription" class="d-inline-block text-truncate" style="max-width: 100%;">
+          <a :href="localUrl"><small :title="localDescription" class="d-inline-block text-truncate" style="max-width: 100%;" >
             Ticket #{{ localId }} - {{ localTitle }}
         </small></a>
         </div>
 
         <!-- Second Column: Play, Pause, Stop Buttons -->
-        <div class="col-4">
+        <div class="col-3">
           <div class="btn-group btn-group-sm" role="group"  aria-label="Timer Controls">
             <button class="btn btn-outline-primary" @click.stop="toggleTimer">
-              {{ isRunning ? '⏸︎' : '⏵︎' }}
+              <Play v-if="!isRunning" title="Play"/>
+              <Pause v-if="isRunning" title="Pause"/>
             </button>
             <button class="btn btn-outline-danger" @click.stop="stopTimerAndClear">
-              ⏹
+              <Stop />
             </button>
-            <button class="btn btn-outline-success" @click.stop="bookTimeEntry">
-              Book Time
+            <button class="btn btn-outline-warning" @click.stop="removeTimer">
+              <Close title="Remove timer" />
             </button>
           </div>
+        </div>
+        <div class="col-1">
+          <button class="btn btn-sm btn-outline-success" @click.stop="bookTimeEntry">
+            <SendClock title="Book time" />
+          </button>
         </div>
 
       </div>
 
-      <div class="row">
+      <div class="row" >
         <div class="col-8">
           <!-- Comment Input -->
           <div class="form-group">
@@ -211,6 +230,7 @@ export default {
           </div>
         </div>
       </div>
+  <hr>
 </template>
 
 <style scoped>

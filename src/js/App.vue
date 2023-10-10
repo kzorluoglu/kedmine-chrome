@@ -16,10 +16,12 @@
   </div>
 </template>
 <style>
-body {
-  width: 600px !important;
-  max-width: 600px !important;
-  min-width: 600px !important;
+#app {
+  width: 600px;
+  margin: 0 auto; /* Centers the app in the middle of the page */
+}
+.grid-container {
+  overflow-x: auto; /* to allow horizontal scrolling */
 }
 </style>
 <script>
