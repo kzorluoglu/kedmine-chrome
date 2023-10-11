@@ -237,7 +237,6 @@ export default {
     },
     handleRemoveTimer(timerState)
     {
-      console.log(timerState)
       this.removeTimer(timerState.uniqueTimerId);
     },
     handleStartTimer(issue) {
@@ -267,7 +266,6 @@ export default {
 
         this.removeTimer(timerState.uniqueTimerId);
 
-        console.log('Time entry booked successfully');
       } catch (error) {
         console.error('Error booking the time entry:', error);
       }
@@ -275,7 +273,6 @@ export default {
 
     removeTimer(uniqueTimerId) {
       // Remove from runningTimers
-      console.log(uniqueTimerId)
       this.runningTimers = this.runningTimers.filter(timer => timer.uniqueTimerId !== uniqueTimerId);
 
       // Remove from localStorage
@@ -298,7 +295,7 @@ export default {
   <div class="row">
     <div class="col-12">
       <Timer
-        v-for="(issue, index) in runningTimers" :key="index"
+        v-for="issue in runningTimers" :key="issue.uniqueTimerId"
         :uniqueTimerId="issue.uniqueTimerId"
         :id="issue.id"
         :title="issue.title"

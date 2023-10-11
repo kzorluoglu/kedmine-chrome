@@ -76,10 +76,10 @@ import { Close, Play, Pause, Stop, SendClock } from "mdue"
         issueComment: this.issueComment,
         usedTime: this.usedTime,
       };
-      localStorage.setItem('timerState_' + this.id, JSON.stringify(timerState));
+      localStorage.setItem('timerState_' + this.uniqueTimerId, JSON.stringify(timerState));
     },
     loadStateFromLocalStorage() {
-      const savedState = localStorage.getItem('timerState_' + this.id);
+      const savedState = localStorage.getItem('timerState_' + this.uniqueTimerId);
       if (savedState) {
         const timerState = JSON.parse(savedState);
 
@@ -134,7 +134,6 @@ import { Close, Play, Pause, Stop, SendClock } from "mdue"
       this.$emit('book-time-entry', this.getState());
     },
     removeTimer() {
-      console.log(this.getState())
       this.$emit('remove-timer', this.getState());
     },
     getState() {
