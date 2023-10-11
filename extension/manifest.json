@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "My Redmine Extension",
+  "name": "kedmine Timer",
   "version": "1.0",
-  "description": "A brief description of the extension.",
+  "description": "A productivity tool that allows users to efficiently track time spent on individual tasks or issues. With real-time updates, search and local storage persistence, and easy-to-use timer controls, manage your tasks and seamlessly book time entries directly from your browser.",
   "permissions": [
     "storage",
     "activeTab",
