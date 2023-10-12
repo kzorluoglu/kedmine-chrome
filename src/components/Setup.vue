@@ -3,19 +3,21 @@
     <h2>Redmine Setup</h2>
     <div class="input-group">
       <label for="redmineURL">Redmine URL:</label>
-      <input id="redmineURL" v-model="redmineURL" placeholder="Enter Redmine URL" />
+      <input id="redmineURL" v-model="redmineURL" placeholder="Enter Redmine URL"/>
     </div>
     <div class="input-group">
       <label for="htaccessUsername">*Optional - Redmine htaccess Username:</label>
-      <input id="htaccessUsername" v-model="htaccessUsername" placeholder="Enter htaccess Username" />
+      <input id="htaccessUsername" v-model="htaccessUsername"
+             placeholder="Enter htaccess Username"/>
     </div>
     <div class="input-group">
       <label for="htaccessPassword">*Optional - htaccess Password:</label>
-      <input type="password" id="htaccessPassword" v-model="htaccessPassword" placeholder="Enter htaccess Password" />
+      <input type="password" id="htaccessPassword" v-model="htaccessPassword"
+             placeholder="Enter htaccess Password"/>
     </div>
     <div class="input-group">
       <label for="apiToken">User API Token:</label>
-      <input id="apiToken" type="password" v-model="apiToken" placeholder="Enter User API Token" />
+      <input id="apiToken" type="password" v-model="apiToken" placeholder="Enter User API Token"/>
     </div>
     <button class="save-button" @click="saveSettings">Save</button>
   </div>

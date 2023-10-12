@@ -64,7 +64,7 @@ export default {
 
       // Increment uniqueTimerId for the next timer and store it back in localStorage
       localStorage.setItem('uniqueTimerId', uniqueTimerId + 1);
-      },
+    },
     getSettings() {
       return {
         redmineURL: localStorage.getItem('redmineURL') || '',
@@ -113,25 +113,25 @@ export default {
     convertDecimalHoursToMilliseconds(decimalHours) {
       return decimalHours * 3_600_000;  // Convert hours to milliseconds
     },
-      convertTimeEntryToTimerFormat(entry) {
-        const settings = this.getSettings();
+    convertTimeEntryToTimerFormat(entry) {
+      const settings = this.getSettings();
 
-        // Assume entry.detailedIssue is populated with the result of fetchIssueDetails
-        if (entry.detailedIssue) {
+      // Assume entry.detailedIssue is populated with the result of fetchIssueDetails
+      if (entry.detailedIssue) {
 
-          // Convert entry.hours into milliseconds
-          const elapsedTime = this.convertDecimalHoursToMilliseconds(entry.hours);
+        // Convert entry.hours into milliseconds
+        const elapsedTime = this.convertDecimalHoursToMilliseconds(entry.hours);
 
-          return {
-            id: entry.detailedIssue.id,
-            title: entry.detailedIssue.subject,
-            url: `${settings.redmineURL}/issues/${entry.detailedIssue.id}`,
-            description: entry.detailedIssue.description,
-            elapsedTime
-          };
-        }
-        return null;
-      },
+        return {
+          id: entry.detailedIssue.id,
+          title: entry.detailedIssue.subject,
+          url: `${settings.redmineURL}/issues/${entry.detailedIssue.id}`,
+          description: entry.detailedIssue.description,
+          elapsedTime
+        };
+      }
+      return null;
+    },
 
     async fetchTimeEntries(getLastEntries = false) {
 
@@ -235,8 +235,7 @@ export default {
         }
       }
     },
-    handleRemoveTimer(timerState)
-    {
+    handleRemoveTimer(timerState) {
       this.removeTimer(timerState.uniqueTimerId);
     },
     handleStartTimer(issue) {
@@ -319,40 +318,39 @@ export default {
   </div>
   <div class="row mt-3 mb-3" v-if="searchTerm.length > 0">
     <div class="col-12">
-        <h3>Search Results</h3>
-        <div v-if="foundedIssues.length === 0">No issues found.</div>
-        <SearchEntry :issue="issue"
-                     v-for="issue in foundedIssues"
-                     :key="issue.id"
-                     @start-timer-for-issue="handleStartTimer"
-        />
+      <h3>Search Results</h3>
+      <div v-if="foundedIssues.length === 0">No issues found.</div>
+      <SearchEntry :issue="issue"
+                   v-for="issue in foundedIssues"
+                   :key="issue.id"
+                   @start-timer-for-issue="handleStartTimer"
+      />
     </div>
   </div>
 
-    <!-- Display Time Entries -->
-    <div class="time-entries-list">
-      <div class="row">
-        <div class="col-9">
-          <h5>My last issues</h5>
-        </div>
-        <div class="col-3">
-          <button class="btn btn-sm btn-outline-secondary" @click="syncTimeEntries">Sync</button>
-        </div>
+  <!-- Display Time Entries -->
+  <div class="time-entries-list">
+    <div class="row">
+      <div class="col-9">
+        <h5>My last issues</h5>
       </div>
-      <div class="row">
-        <div class="col-12">
-          <div v-if="isLoading">Loading...</div>
-          <TimeEntry :issue="convertTimeEntryToTimerFormat(entry)"
-                     v-for="entry in timeEntries"
-                     :key="entry.id"
-                     @start-timer-for-issue="handleStartTimer"
-          />
-        </div>
+      <div class="col-3">
+        <button class="btn btn-sm btn-outline-secondary" @click="syncTimeEntries">Sync</button>
       </div>
-
-
-
     </div>
+    <div class="row">
+      <div class="col-12">
+        <div v-if="isLoading">Loading...</div>
+        <TimeEntry :issue="convertTimeEntryToTimerFormat(entry)"
+                   v-for="entry in timeEntries"
+                   :key="entry.id"
+                   @start-timer-for-issue="handleStartTimer"
+        />
+      </div>
+    </div>
+
+
+  </div>
 </template>
 
 

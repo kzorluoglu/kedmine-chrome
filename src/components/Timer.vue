@@ -1,7 +1,8 @@
 <script>
-import { EventBus } from "../eventBus";
-import { Close, Play, Pause, Stop, SendClock } from "mdue"
- export default {
+import {EventBus} from "../eventBus";
+import {Close, Play, Pause, Stop, SendClock} from "mdue"
+
+export default {
   name: 'Timer',
   components: {
     Close, Play, Pause, Stop, SendClock
@@ -180,55 +181,56 @@ import { Close, Play, Pause, Stop, SendClock } from "mdue"
 </script>
 
 <template>
-      <div class="row" >
+  <div class="row">
 
-        <!-- First Column: Ticket ID & Subject -->
-        <div class="col-8">
-          <a :href="localUrl"><small :title="localDescription" class="d-inline-block text-truncate" style="max-width: 100%;" >
-            Ticket #{{ localId }} - {{ localTitle }}
-        </small></a>
-        </div>
+    <!-- First Column: Ticket ID & Subject -->
+    <div class="col-8">
+      <a :href="localUrl"><small :title="localDescription" class="d-inline-block text-truncate"
+                                 style="max-width: 100%;">
+        Ticket #{{ localId }} - {{ localTitle }}
+      </small></a>
+    </div>
 
-        <!-- Second Column: Play, Pause, Stop Buttons -->
-        <div class="col-3">
-          <div class="btn-group btn-group-sm" role="group"  aria-label="Timer Controls">
-            <button class="btn btn-outline-primary" @click.stop="toggleTimer">
-              <Play v-if="!isRunning" title="Play"/>
-              <Pause v-if="isRunning" title="Pause"/>
-            </button>
-            <button class="btn btn-outline-danger" @click.stop="stopTimerAndClear">
-              <Stop />
-            </button>
-            <button class="btn btn-outline-warning" @click.stop="removeTimer">
-              <Close title="Remove timer" />
-            </button>
-          </div>
-        </div>
-        <div class="col-1">
-          <button class="btn btn-sm btn-outline-success" @click.stop="bookTimeEntry">
-            <SendClock title="Book time" />
-          </button>
-        </div>
-
+    <!-- Second Column: Play, Pause, Stop Buttons -->
+    <div class="col-3">
+      <div class="btn-group btn-group-sm" role="group" aria-label="Timer Controls">
+        <button class="btn btn-outline-primary" @click.stop="toggleTimer">
+          <Play v-if="!isRunning" title="Play"/>
+          <Pause v-if="isRunning" title="Pause"/>
+        </button>
+        <button class="btn btn-outline-danger" @click.stop="stopTimerAndClear">
+          <Stop/>
+        </button>
+        <button class="btn btn-outline-warning" @click.stop="removeTimer">
+          <Close title="Remove timer"/>
+        </button>
       </div>
+    </div>
+    <div class="col-1">
+      <button class="btn btn-sm btn-outline-success" @click.stop="bookTimeEntry">
+        <SendClock title="Book time"/>
+      </button>
+    </div>
 
-      <div class="row" >
-        <div class="col-8">
-          <!-- Comment Input -->
-          <div class="form-group">
-            <input class="form-control" v-model="issueComment"
-                   @change="updateIssueComment($event)"
-                   @blur="updateIssueComment($event)"
-                   placeholder="Add a comment..." />
-          </div>
-        </div>
-        <div class="col-4">
-          <!-- Timer -->
-          <div class="text-right">
-            <h1 class="display-6">{{ formatTime(usedTime) }}</h1>
-          </div>
-        </div>
+  </div>
+
+  <div class="row">
+    <div class="col-8">
+      <!-- Comment Input -->
+      <div class="form-group">
+        <input class="form-control" v-model="issueComment"
+               @change="updateIssueComment($event)"
+               @blur="updateIssueComment($event)"
+               placeholder="Add a comment..."/>
       </div>
+    </div>
+    <div class="col-4">
+      <!-- Timer -->
+      <div class="text-right">
+        <h1 class="display-6">{{ formatTime(usedTime) }}</h1>
+      </div>
+    </div>
+  </div>
   <hr>
 </template>
 

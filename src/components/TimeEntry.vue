@@ -29,22 +29,23 @@ export default {
 </script>
 
 <template>
-      <div class="row border-bottom" >
-          <!-- First Column: Re-Start -->
-          <div class="col-2">
-            <button class="btn btn-primary btn-sm" @click="startNewTimer">New Timer</button>
-          </div>
-          <div class="col-2">
-            <span class="overflow-hidden">{{ formatTime(this.issue.elapsedTime) }}</span>
-          </div>
-          <div class="col-8">
-            <a :href="issue.url" target="_blank">
-              <small :title="issue.description"  class="d-inline-block text-truncate" style="display:block; max-width: 100%; white-space: normal;">
-              Ticket #{{ issue.id }} - {{ issue.title }}
-              </small>
-            </a>
-          </div>
-        </div>
+  <div class="row border-bottom">
+    <!-- First Column: Re-Start -->
+    <div class="col-2">
+      <button class="btn btn-primary btn-sm" @click="startNewTimer">New Timer</button>
+    </div>
+    <div class="col-2">
+      <span class="overflow-hidden">{{ formatTime(this.issue.elapsedTime) }}</span>
+    </div>
+    <div class="col-8">
+      <a :href="issue.url" target="_blank">
+        <small :title="issue.description" class="d-inline-block text-truncate"
+               style="display:block; max-width: 100%; white-space: normal;">
+          Ticket #{{ issue.id }} - {{ issue.title }}
+        </small>
+      </a>
+    </div>
+  </div>
 </template>
 
 <style scoped>
