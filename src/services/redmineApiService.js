@@ -109,7 +109,7 @@
             q: searchTerm,         // The search query
             object_types: ['issue'],    // To search only issues
           },
-          headers: headers,
+          headers: await this.getHeaders(),
         });
 
         return response.data.results;
