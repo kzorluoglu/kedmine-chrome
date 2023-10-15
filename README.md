@@ -4,6 +4,8 @@ A Chrome Extension with Vue.js to efficiently track time for Redmine tickets.
 
 ## Features
 
+- Create Timer via shortcut (`Ctrl + Shift + k`) 
+  - Usage: Go to Issue Page on redmine and type this shortcut.
 - Multiple Timer for some issue
 - Real-time search for tickets.
 - Timer functionality integrated for each ticket.
@@ -65,14 +67,14 @@ _Search Result_
 ## ToDo
 
 * Create Timer in Background via Shortcut
-   * The shortcut (`Ctrl + Shift + k`) is already completed. 
+   * ~~The shortcut (`Ctrl + Shift + k`) is already completed.~~ - completed
    * Temp Timer Component
         * This component must be accepts an Issue ID and an optional title. This is reasonable if you want to track time against specific issues.
    *  Issue Text or Issue ID Information - Need Idea
         * Solution ideas
             * URL Bar as Issue Comment Text: This would be convenient, but you need to ensure the URL contains relevant information about the issue???
             * Right-Click Menu for Issue Comment Input???
-   * Create timerState in LocalStorage - You have referenced a code line (src/components/Timer.vue:76)
+   * ~~Create timerState in LocalStorage - You have referenced a code line (src/components/Timer.vue:76)~~ IndexedDB used.
 
    
 

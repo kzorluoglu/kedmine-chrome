@@ -2,7 +2,10 @@
 import Timer from "../components/Timer.vue";
 import TimeEntry from "../components/TimeEntry.vue";
 import SearchEntry from "../components/SearchEntry.vue";
-import axios from 'axios';
+import {EventBus} from "../eventBus";
+import { shortcodeEventData } from "../interfaces/shortcodeEventData"
+import redmineApiService from "../services/redmineApiService"
+import timerService from "../services/timerService"
 
 export default {
   components: {
@@ -14,16 +17,26 @@ export default {
     return {
       foundedIssues: [],
       timeEntries: [],
+      timerFormatEntries: [],
       currentUser: null,
       isLoading: true,
       searchTerm: '', // for the realtime search,
       runningTimers: [],
     }
   },
-  mounted() {
-    this.fetchCurrentUser();
+  created() {
+    EventBus.on('create-new-timer', this.createNewTimerViaShortcode);
+  },
+  async mounted() {
+    try {
+      this.currentUser = await redmineApiService.fetchCurrentUser()
 
-    this.loadRunningTimersFromLocalStorage();
+    } catch (error) {
+      this.$router.push('setup');  // redirect to home page
+      console.error(error.message);
+    }
+    await this.fetchTimeEntries();
+    await this.loadRunningTimers();
   },
   watch: {
     async searchTerm() {
@@ -31,90 +44,29 @@ export default {
     }
   },
   methods: {
-    async loadRunningTimersFromLocalStorage() {
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (key.startsWith('timerState_')) {
-          const timerState = JSON.parse(localStorage.getItem(key));
-          // Do something with timerState, for example:
-          this.runningTimers.push(timerState);
-        }
-      });
+    /**
+     * @param {shortcodeEventData} eventData
+     */ async createNewTimerViaShortcode(eventData) {
+      const issue = await redmineApiService.fetchIssueDetails(eventData.issueId);
+      this.startTimerFromIssue(issue);
+    },
+    async loadRunningTimers() {
+      const timerStates = await timerService.getRunningTimers();
+      this.runningTimers = [...this.runningTimers, ...timerStates];
     },
     startTimerFromIssue(issue) {
-      // Retrieve the uniqueTimerId from localStorage and parse it as an integer
-      // If it's not set yet, default it to 0
-      let uniqueTimerId = parseInt(localStorage.getItem('uniqueTimerId')) || 0;
-
-      const timerState = {
-        uniqueTimerId: uniqueTimerId,
-        id: issue.id,
-        title: issue.title,
-        description: issue.description,
-        url: issue.url,
-        issueComment: '',
-        isRunning: false,
-        elapsedTime: 0,
-        lastUpdate: null,
-      };
-
-      this.runningTimers.push(timerState);
-
-      localStorage.setItem('timerState_' + uniqueTimerId, JSON.stringify(timerState));
-
-      // Increment uniqueTimerId for the next timer and store it back in localStorage
-      localStorage.setItem('uniqueTimerId', uniqueTimerId + 1);
-    },
-    getSettings() {
-      return {
-        redmineURL: localStorage.getItem('redmineURL') || '',
-        htaccessUsername: localStorage.getItem('htaccessUsername') || '',
-        htaccessPassword: localStorage.getItem('htaccessPassword') || '',
-        apiToken: localStorage.getItem('apiToken') || '',
-      }
-    },
-    getAxiosHeaders() {
-      const settings = this.getSettings();
-      let headers = {
-        'X-Redmine-API-Key': settings.apiToken,
-      };
-
-      if (settings.htaccessUsername && settings.htaccessPassword) {
-        headers['Authorization'] = 'Basic ' + btoa(settings.htaccessUsername + ':' + settings.htaccessPassword);
-      }
-      return headers;
+      const createdTimer = timerService.createTimer(issue);
+      this.runningTimers.push(createdTimer);
     },
 
-    async fetchCurrentUser() {
-      const settings = this.getSettings();
-
-      if (!settings.redmineURL || !settings.apiToken) {
-        console.log('Redmine URL or API Token is missing. Please configure in the setup page.');
-        return;
-      }
-
-      let headers = this.getAxiosHeaders();
-
-      try {
-        let response = await axios.get(`${settings.redmineURL}/users/current.json`, {
-          headers: headers,
-        });
-
-        this.currentUser = response.data.user;
-        await this.fetchTimeEntries();
-      } catch (error) {
-        console.error('There was an error fetching the current user:', JSON.stringify(error, null, 2));
-      }
-    },
-
-    syncTimeEntries() {
-      this.fetchTimeEntries(true);
+    async syncTimeEntries() {
+      await this.fetchTimeEntries(true);
     },
     convertDecimalHoursToMilliseconds(decimalHours) {
       return decimalHours * 3_600_000;  // Convert hours to milliseconds
     },
-    convertTimeEntryToTimerFormat(entry) {
-      const settings = this.getSettings();
+    async convertTimeEntryToTimerFormat(entry) {
+      const settings = await redmineApiService.getSettings();
 
       // Assume entry.detailedIssue is populated with the result of fetchIssueDetails
       if (entry.detailedIssue) {
@@ -130,109 +82,52 @@ export default {
           elapsedTime
         };
       }
+
       return null;
     },
-
     async fetchTimeEntries(getLastEntries = false) {
-
-      const savedTimeEntries = localStorage.getItem('savedTimeEntries');
-      if (savedTimeEntries && getLastEntries === false) {
-        this.isLoading = false;
-        this.timeEntries = JSON.parse(savedTimeEntries);
-
-        return;
-      }
-
-      if (!this.currentUser) return;
-
-      const settings = this.getSettings();
-      const userId = this.currentUser.id;
-      let headers = this.getAxiosHeaders();
-
       try {
-        let response = await axios.get(`${settings.redmineURL}/time_entries.json`, {
-          params: {
-            user_id: userId,
-          },
-          headers: headers,
-        });
+        if (!this.currentUser) return;
 
-        this.timeEntries = response.data.time_entries;
-
-
-        for (let entry of this.timeEntries) {
-          if (entry.issue && entry.issue.id) {
-            entry.detailedIssue = await this.fetchIssueDetails(entry.issue.id);
-          }
+        const savedTimeEntries = await timerService.getTimeEntries();
+        if (savedTimeEntries.length > 0 && !getLastEntries) {
+          await this.updateTimeEntries(savedTimeEntries);
+        } else {
+          await this.fetchAndSaveTimeEntriesFromAPI();
         }
-
-        // Save to localStorage
-        localStorage.setItem('savedTimeEntries', JSON.stringify(this.timeEntries));
-
-        this.isLoading = false;
       } catch (error) {
-        console.error('There was an error fetching the time entries:', JSON.stringify(error, null, 2));
-        this.isLoading = false;
+        console.error('Error fetching time entries:', error);
+        this.isLoading = false;  // Ensure loading is set to false in case of error
       }
     },
 
-    async fetchIssueDetails(issueId) {
-      const settings = this.getSettings();
-      let headers = this.getAxiosHeaders();
-
-      try {
-        let response = await axios.get(`${settings.redmineURL}/issues/${issueId}.json`, {
-          headers: headers,
-        });
-
-        return response.data.issue;
-      } catch (error) {
-        console.error(`There was an error fetching the details for issue ${issueId}:`, JSON.stringify(error, null, 2));
-        return null;
-      }
+    async updateTimeEntries(savedTimeEntries) {
+      this.timeEntries = savedTimeEntries;
+      this.timerFormatEntries = await this.convertAllTimeEntriesToTimerFormat(savedTimeEntries);
+      this.isLoading = false;
     },
 
+    async fetchAndSaveTimeEntriesFromAPI() {
+      this.timeEntries = await redmineApiService.timeEntries(this.currentUser.id);
+      for (let entry of this.timeEntries) {
+        if (entry.issue && entry.issue.id) {
+          entry.detailedIssue = await redmineApiService.fetchIssueDetails(entry.issue.id);
+        }
+      }
+      await timerService.saveTimeEntries(this.timeEntries);
+      this.timerFormatEntries = await this.convertAllTimeEntriesToTimerFormat(this.timeEntries);
+      this.isLoading = false;
+    },
+
+    async convertAllTimeEntriesToTimerFormat(timeEntries) {
+      return Promise.all(timeEntries.map(entry => this.convertTimeEntryToTimerFormat(entry)));
+    },
     async fetchIssuesBySearchTerm() {
       if (!this.searchTerm) return; // If the searchTerm is empty, don't do anything
 
-      const settings = this.getSettings();
-      let headers = this.getAxiosHeaders();
-
-      if (Number(this.searchTerm)) {
-        try {
-          let response = await axios.get(`${settings.redmineURL}/issues/${this.searchTerm}.json`, {
-            headers: headers,
-          });
-
-          // Normalize the issue for Timer component
-          const normalizedIssue = {
-            id: response.data.issue.id,
-            title: `${response.data.issue.id} - ${response.data.issue.subject}`,
-            url: `${settings.redmineURL}/issues/${response.data.issue.id}`,
-            description: response.data.issue.description
-          };
-
-          this.foundedIssues = [normalizedIssue];
-
-        } catch (error) {
-          console.error(`There was an error fetching the issue with ID ${this.searchTerm}:`, JSON.stringify(error, null, 2));
-        }
-      } else {
-
-        try {
-          let response = await axios.get(`${settings.redmineURL}/search.json`, {
-            params: {
-              q: this.searchTerm,         // The search query
-              object_types: ['issue'],    // To search only issues
-            },
-            headers: headers,
-          });
-
-          this.foundedIssues = response.data.results; // This will store the fetched issues
-
-        } catch (error) {
-          console.error('There was an error searching for the issues:', JSON.stringify(error, null, 2));
-        }
+      const foundedIssues = await redmineApiService.fetchIssuesBySearchTerm(this.searchTerm);
+      if (foundedIssues) {
+        this.foundedIssues = foundedIssues;
       }
     },
     handleRemoveTimer(timerState) {
@@ -241,44 +136,22 @@ export default {
     handleStartTimer(issue) {
       this.startTimerFromIssue(issue);
     },
-    elapsedTimeToHours(milliseconds) {
-      return milliseconds / 3_600_000;  // Convert milliseconds to hours
-    },
-    async handleBookTimeEntry(timerState) {
-
-      const settings = this.getSettings();
-      const headers = this.getAxiosHeaders();
-
-      // Create the payload for the time entry
-      const timeEntryData = {
-        time_entry: {
-          issue_id: timerState.id,
-          hours: this.elapsedTimeToHours(timerState.usedTime),
-          comments: timerState.issueComment
-        }
-      };
-
-      try {
-        await axios.post(`${settings.redmineURL}/time_entries.xml`, timeEntryData, {
-          headers: headers,
-        });
-
+    async handleBookTimeEntry(timerState)
+    {
+      const success = await redmineApiService.bookTimeEntry(timerState);
+      if (success) {
         this.removeTimer(timerState.uniqueTimerId);
-
-      } catch (error) {
-        console.error('Error booking the time entry:', error);
       }
     },
-
     removeTimer(uniqueTimerId) {
       // Remove from runningTimers
       this.runningTimers = this.runningTimers.filter(timer => timer.uniqueTimerId !== uniqueTimerId);
 
-      // Remove from localStorage
-      localStorage.removeItem('timerState_' + uniqueTimerId);
+      timerService.removeTimerByUniqueId(uniqueTimerId)
     },
   },
   beforeDestroy() {
+    EventBus.off('create-new-timer', this.createNewTimerViaShortcode);
   },
 };
 </script>
@@ -341,8 +214,8 @@ export default {
     <div class="row">
       <div class="col-12">
         <div v-if="isLoading">Loading...</div>
-        <TimeEntry :issue="convertTimeEntryToTimerFormat(entry)"
-                   v-for="entry in timeEntries"
+        <TimeEntry v-for="entry in timerFormatEntries"
+                   :issue="entry"
                    :key="entry.id"
                    @start-timer-for-issue="handleStartTimer"
         />

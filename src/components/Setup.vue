@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import redmineApiService from "../services/redmineApiService";
+
 export default {
   data() {
     return {
@@ -33,25 +35,26 @@ export default {
       apiToken: '',
     }
   },
-  mounted() {
-    this.redmineURL = localStorage.getItem('redmineURL') || '';
-    this.htaccessUsername = localStorage.getItem('htaccessUsername') || '';
-    this.htaccessPassword = localStorage.getItem('htaccessPassword') || '';
-    this.apiToken = localStorage.getItem('apiToken') || '';
+  async mounted() {
+    const settings = await redmineApiService.getSettings();
+    if (settings) {
+      this.redmineURL = settings.redmineURL;
+      this.htaccessUsername = settings.htaccessUsername;
+      this.htaccessPassword = settings.htaccessPassword;
+      this.apiToken = settings.apiToken;
+    }
   },
   methods: {
-    saveSettings() {
-      // Save the settings to localStorage or any other place you'd prefer.
-      // For this example, we'll use localStorage
-      localStorage.setItem('redmineURL', this.redmineURL);
-      localStorage.setItem('htaccessUsername', this.htaccessUsername);
-      localStorage.setItem('htaccessPassword', this.htaccessPassword);
-      localStorage.setItem('apiToken', this.apiToken);
-
-      // Maybe redirect user to another page or give a success message.
+    async saveSettings() {
+      await redmineApiService.saveSettings({
+        redmineURL: this.redmineURL,
+        htaccessUsername: this.htaccessUsername,
+        htaccessPassword: this.htaccessPassword,
+        apiToken: this.apiToken,
+      });
       this.$router.push('/');  // redirect to home page
-    }
-  }
+    },
+  },
 }
 </script>
 

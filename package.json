@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^1.5.1",
     "bootstrap": "^5.3.2",
+    "dexie": "^3.2.4",
     "mdue": "^0.1.4",
     "mitt": "^3.0.1",
     "postcss": "^8.4.31",

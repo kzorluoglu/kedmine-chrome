@@ -9,6 +9,7 @@ module.exports = (env, argv) => {
   return {
     entry: {
       index: path.join(__dirname, 'src', 'index.js'),
+      background: path.join(__dirname, 'src', 'background.js'),
     },
     output: {
       path: path.join(__dirname, 'dist'),

@@ -185,7 +185,7 @@ export default {
 
     <!-- First Column: Ticket ID & Subject -->
     <div class="col-8">
-      <a :href="localUrl"><small :title="localDescription" class="d-inline-block text-truncate"
+      <a :href="localUrl" target="_blank"><small :title="localDescription" class="d-inline-block text-truncate"
                                  style="max-width: 100%;">
         Ticket #{{ localId }} - {{ localTitle }}
       </small></a>
