@@ -4,7 +4,7 @@
   "description": "Browser extension for Redmine Issues with some cool features like K Style",
   "main": ".eslintrc.js",
   "scripts": {
-    "dev": "webpack serve --mode development",
+    "dev": "webpack --watch --mode production",
     "build": "webpack --mode production"
   },
   "author": "Koray Zorluoglu",

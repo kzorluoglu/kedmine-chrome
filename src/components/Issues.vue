@@ -16,8 +16,7 @@ export default {
   data() {
     return {
       foundedIssues: [],
-      timeEntries: [],
-      timerFormatEntries: [],
+      timerEntries: [],
       currentUser: null,
       isLoading: true,
       searchTerm: '', // for the realtime search,
@@ -54,8 +53,8 @@ export default {
       const timerStates = await timerService.getRunningTimers();
       this.runningTimers = [...this.runningTimers, ...timerStates];
     },
-    startTimerFromIssue(issue) {
-      const createdTimer = timerService.createTimer(issue);
+    async startTimerFromIssue(issue) {
+      const createdTimer = await timerService.createTimer(issue);
       this.runningTimers.push(createdTimer);
     },
 
@@ -102,26 +101,30 @@ export default {
     },
 
     async updateTimeEntries(savedTimeEntries) {
-      this.timeEntries = savedTimeEntries;
-      this.timerFormatEntries = await this.convertAllTimeEntriesToTimerFormat(savedTimeEntries);
+      let formatEntries = await this.convertAllTimeEntriesToTimerFormat(savedTimeEntries);
+      this.timerEntries = formatEntries.filter(entry => entry !== null);
+      // Filter out null entries
       this.isLoading = false;
     },
 
     async fetchAndSaveTimeEntriesFromAPI() {
-      this.timeEntries = await redmineApiService.timeEntries(this.currentUser.id);
-      for (let entry of this.timeEntries) {
+      let timeEntries = await redmineApiService.timeEntries(this.currentUser.id);
+      for (let entry of timeEntries) {
         if (entry.issue && entry.issue.id) {
           entry.detailedIssue = await redmineApiService.fetchIssueDetails(entry.issue.id);
         }
       }
-      await timerService.saveTimeEntries(this.timeEntries);
-      this.timerFormatEntries = await this.convertAllTimeEntriesToTimerFormat(this.timeEntries);
+      await timerService.saveTimeEntries(timeEntries);
+      this.timerFormatEntries = await this.convertAllTimeEntriesToTimerFormat(timeEntries);
       this.isLoading = false;
     },
 
     async convertAllTimeEntriesToTimerFormat(timeEntries) {
-      return Promise.all(timeEntries.map(entry => this.convertTimeEntryToTimerFormat(entry)));
+      return Promise.all(timeEntries.map(entry => {
+        return this.convertTimeEntryToTimerFormat(entry);
+      }));
     },
+
     async fetchIssuesBySearchTerm() {
       if (!this.searchTerm) return; // If the searchTerm is empty, don't do anything
 
@@ -133,8 +136,8 @@ export default {
     handleRemoveTimer(timerState) {
       this.removeTimer(timerState.uniqueTimerId);
     },
-    handleStartTimer(issue) {
-      this.startTimerFromIssue(issue);
+    async handleStartTimer(issue) {
+      await this.startTimerFromIssue(issue);
     },
     async handleBookTimeEntry(timerState)
     {
@@ -193,8 +196,8 @@ export default {
     <div class="col-12">
       <h3>Search Results</h3>
       <div v-if="foundedIssues.length === 0">No issues found.</div>
-      <SearchEntry :issue="issue"
-                   v-for="issue in foundedIssues"
+      <SearchEntry v-for="issue in foundedIssues"
+                   :issue="issue"
                    :key="issue.id"
                    @start-timer-for-issue="handleStartTimer"
       />
@@ -214,7 +217,7 @@ export default {
     <div class="row">
       <div class="col-12">
         <div v-if="isLoading">Loading...</div>
-        <TimeEntry v-for="entry in timerFormatEntries"
+        <TimeEntry v-for="entry in timerEntries"
                    :issue="entry"
                    :key="entry.id"
                    @start-timer-for-issue="handleStartTimer"
