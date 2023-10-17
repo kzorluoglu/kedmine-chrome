@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import Setup from "./components/Setup.vue";
 import Issues from "./components/Issues.vue";
+import redmineApiService from './services/redmineApiService';  // <== add this import to the top part of `encryption.js`
 
 const routes = [
   {
@@ -27,11 +28,12 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, from, next) => {
-  const isSetupComplete = localStorage.getItem('redmineURL') && localStorage.getItem('apiToken'); // and other checks if necessary
+router.beforeEach(async (to, from, next) => {
+  const settings = await redmineApiService.getSettings(); // <== use the getSettings function here
+  const isSetupComplete = settings.redmineURL && settings.apiToken; // <== check settings from DB here
 
   if (to.matched.some(record => record.meta.requiresSetup) && !isSetupComplete) {
-    next({ path: '/setup' }); // Redirect to setup page if setup is not complete
+    next({path: '/setup'}); // Redirect to setup page if setup is not complete
   } else {
     next(); // Otherwise continue
   }
