@@ -65,9 +65,31 @@ _Search Result_
 
 
 ## ToDo
+   * CSV to Redmine Table Convert - Feature Idea
+```js
+function convertToRedmineTableFormat(csvText) {
+  const lines = csvText.trim().split('\n');
+  let redmineTable = '';
 
-* Create Timer in Background via Shortcut
-   * ~~The shortcut (`Ctrl + Shift + k`) is already completed.~~ - completed
+  lines.forEach((line, index) => {
+    const columns = line.split(',');
+    let tableRow = '|';
+    columns.forEach(column => {
+      // Check if the row is the header row
+      if (index === 0) {
+        tableRow += `_.${column}|`;
+      } else {
+        // Add quotes if the column contains special characters or spaces
+        tableRow += `${column.includes(' ') || /[\W_]+/.test(column) ? `"${column}"` : column}|`;
+      }
+    });
+    redmineTable += `${tableRow}\n`;
+  });
+
+  return redmineTable;
+} 
+```
+
    * Temp Timer Component
         * This component must be accepts an Issue ID and an optional title. This is reasonable if you want to track time against specific issues.
    *  Issue Text or Issue ID Information - Need Idea
