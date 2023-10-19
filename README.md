@@ -8,6 +8,7 @@ A Chrome Extension with Vue.js to efficiently track time for Redmine tickets.
   - Usage: Go to Issue Page on redmine and type this shortcut.
 - Multiple Timer for some issue
 - Real-time search for tickets.
+- CSV to Redmine Table Converter
 - Timer functionality integrated for each ticket.
 - Direct API integration with Redmine.
 - Comment functionality for each ticket.
@@ -15,15 +16,24 @@ A Chrome Extension with Vue.js to efficiently track time for Redmine tickets.
 
 
 ## Screenshots
-
-![Issues Page](/screenshots/issues-page.png)
 _Issues Page_
 
-![Setup Page](/screenshots/setup-page.png)
+![Issues Page](/screenshots/issues-page.png)
+
 _Setup Page_
 
-![Search Result](/screenshots/search-results.png)
+![Setup Page](/screenshots/setup-page.png)
+
 _Search Result_
+
+![Search Result](/screenshots/search-results.png)
+
+_CSV to Redmine Table Converter_
+
+![CSV to Redmine Table Converter](/screenshots/csvToTable1.png)
+
+![CSV to Redmine Table Converter](/screenshots/csvToTable2.png)
+
 
 ## Steps to Use the Extension
 
@@ -65,39 +75,12 @@ _Search Result_
 
 
 ## ToDo
-   * CSV to Redmine Table Convert - Feature Idea
-```js
-function convertToRedmineTableFormat(csvText) {
-  const lines = csvText.trim().split('\n');
-  let redmineTable = '';
-
-  lines.forEach((line, index) => {
-    const columns = line.split(',');
-    let tableRow = '|';
-    columns.forEach(column => {
-      // Check if the row is the header row
-      if (index === 0) {
-        tableRow += `_.${column}|`;
-      } else {
-        // Add quotes if the column contains special characters or spaces
-        tableRow += `${column.includes(' ') || /[\W_]+/.test(column) ? `"${column}"` : column}|`;
-      }
-    });
-    redmineTable += `${tableRow}\n`;
-  });
-
-  return redmineTable;
-} 
-```
-
    * Temp Timer Component
         * This component must be accepts an Issue ID and an optional title. This is reasonable if you want to track time against specific issues.
    *  Issue Text or Issue ID Information - Need Idea
         * Solution ideas
             * URL Bar as Issue Comment Text: This would be convenient, but you need to ensure the URL contains relevant information about the issue???
             * Right-Click Menu for Issue Comment Input???
-   * ~~Create timerState in LocalStorage - You have referenced a code line (src/components/Timer.vue:76)~~ IndexedDB used.
-
    
 
 ## Installation
