@@ -35,7 +35,7 @@ const timerService = {
     const timerState = {
       uniqueTimerId: uniqueTimerId,
       id: issue.id,
-      title: issue.title,
+      title: issue.title ?? issue.subject,
       description: issue.description,
       url: issue.url ?? `${settings.redmineURL}/issues/${issue.id}`,
       issueComment: '',
