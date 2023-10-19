@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "kedmine Timer",
+  "version": "1.0",
+  "description": "A productivity tool that allows users to efficiently track time spent on individual tasks or issues. With real-time updates, search and local storage persistence, and easy-to-use timer controls, manage your tasks and seamlessly book time entries directly from your browser.",
+  "permissions": ["storage", "activeTab", "tabs", "webRequest", "contextMenus"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "images/logo-16x16.png",
+      "48": "images/logo-48x48.png"
+    }
+  },
+  "icons": {
+    "16": "images/logo-16x16.png",
+    "48": "images/logo-48x48.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "create_new_timer_command": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K"
+      },
+      "description": "Create a new timer"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  }
+}
