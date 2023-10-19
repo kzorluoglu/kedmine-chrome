@@ -1,7 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import Setup from "./components/Setup.vue";
 import Issues from "./components/Issues.vue";
-import redmineApiService from './services/redmineApiService';  // <== add this import to the top part of `encryption.js`
+import redmineApiService from './services/redmineApiService';
+import CsvToRedmineTable from "./components/CsvToRedmineTable.vue";  // <== add this import to the top part of `encryption.js`
 
 const routes = [
   {
@@ -14,6 +15,11 @@ const routes = [
     name: 'Issues',
     component: Issues,
     meta: { requiresSetup: true }
+  },
+  {
+    path: '/csv-to-redmine-table', // Change path to '/issues'
+    name: 'csvToRedmineTable',
+    component: CsvToRedmineTable,
   },
   {
     path: '/setup',

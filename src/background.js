@@ -66,3 +66,31 @@ async function fetchIssueDetailsInBackground(issueId) {
     return null;
   }
 }
+
+// CSV to Redmine Table Convert
+let contextMenuInfo = null;
+
+chrome.contextMenus.removeAll(() => {
+  // Now create the new menu item
+  chrome.contextMenus.create({
+    id: "convertCSVToRedmineTable",
+    title: "CSV to Redmine Table",
+    contexts: ["all"],
+    // other properties as needed
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  contextMenuInfo = info;  // Store the click info
+  chrome.windows.create({
+    url: chrome.runtime.getURL("popup.html"),
+    type: "popup",
+  });
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'getContextMenuInfo') {
+    sendResponse({info: contextMenuInfo});
+    contextMenuInfo = null;  // Clear the stored info
+  }
+});

@@ -6,6 +6,9 @@
         <router-link to="/issues" class="nav-link">Issues</router-link>
       </li>
       <li class="nav-item">
+        <router-link to="/csv-to-redmine-table" class="nav-link">CSV to Redmine Table Converter</router-link>
+      </li>
+      <li class="nav-item">
         <router-link to="/setup" class="nav-link">Setup</router-link>
       </li>
     </ul>
