@@ -58,6 +58,11 @@ module.exports = (env, argv) => {
           { from: 'src/manifest.json', to: 'manifest.json' },
           { from: 'src/background.js', to: 'background.js' }
         ]
+      }),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: 'dist', to: path.join(__dirname, 'extension') }
+        ]
       })
     ],
     devServer: {

@@ -194,24 +194,25 @@ export default {
     <!-- Second Column: Play, Pause, Stop Buttons -->
     <div class="col-3">
       <div class="btn-group btn-group-sm" role="group" aria-label="Timer Controls">
-        <button class="btn btn-outline-primary" @click.stop="toggleTimer">
+        <button class="btn btn-primary" @click.stop="toggleTimer">
           <Play v-if="!isRunning" title="Play"/>
           <Pause v-if="isRunning" title="Pause"/>
         </button>
-        <button class="btn btn-outline-danger" @click.stop="stopTimerAndClear">
-          <Stop/>
+        <button class="btn btn-sm btn-success" @click.stop="bookTimeEntry">
+          <SendClock title="Book time"/>
         </button>
-        <button class="btn btn-outline-warning" @click.stop="removeTimer">
+        <button class="btn btn-warning" @click.stop="removeTimer">
           <Close title="Remove timer"/>
         </button>
       </div>
     </div>
     <div class="col-1">
-      <button class="btn btn-sm btn-outline-success" @click.stop="bookTimeEntry">
-        <SendClock title="Book time"/>
-      </button>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Timer Controls">
+        <button class="btn btn-danger" @click.stop="stopTimerAndClear">
+          <Stop/>
+        </button>
+      </div>
     </div>
-
   </div>
 
   <div class="row">
